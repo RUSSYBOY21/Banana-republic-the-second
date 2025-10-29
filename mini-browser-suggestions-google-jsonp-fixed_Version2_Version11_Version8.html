@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MiniBrowser — Suggestions + Shortcuts (Dark Homepage with Viewer)</title>
+
+<style>
+  :root{
+    --bg:#0b1220;
+    --bg-panel:#0f1724;
+    --panel-2:#0d1720;
+    --accent:#7c9cff;
+    --muted:#98a0b3;
+    --text:#e6eef8;
+    --glass: rgba(255,255,255,0.03);
+    --glass-2: rgba(255,255,255,0.02);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    min-height:100%;
+    background: radial-gradient(circle at 20px 20px, rgba(255,255,255,0.015), transparent 2px),
+                radial-gradient(circle at 60px 60px, rgba(255,255,255,0.01), transparent 2px),
+                var(--bg);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  /* top bar */
+  .topbar{
+    height:64px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .brand .logo{
+    width:36px;height:36px;border-radius:8px;background:#fff;
+    background-image: linear-gradient(135deg,#7c9cff,#2b6cff);
+    box-shadow: 0 4px 18px rgba(11,18,32,0.6);
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;
+    font-family: "Segoe UI", Roboto, Arial;
+  }
+  .brand .title{font-weight:700;font-size:18px;color:var(--text);opacity:0.95}
+
+  .top-actions{
+    display:flex;align-items:center;gap:18px;color:var(--muted);font-size:14px;
+  }
+  .top-actions a{color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:8px}
+  .top-actions a:hover{color:var(--text)}
+
+  /* center stage */
+  .stage{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding:24px 20px;
+    gap:18px;
+  }
+
+  .hero{
+    margin-top:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+  }
+  .hero .big-logo{
+    font-size:40px;font-weight:800;letter-spacing:0.6px;color:var(--text);
+    display:flex;align-items:center;gap:12px;
+  }
+  .hero .big-logo .ll{
+    width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#7c9cff,#2b6cff);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:24px;
+    box-shadow:0 10px 30px rgba(43,108,255,0.12), inset 0 -6px 20px rgba(0,0,0,0.25);
+  }
+
+  /* search box */
+  .search-wrap{
+    width:min(880px,92%);
+    display:flex;
+    justify-content:center;
+  }
+  .search-box{
+    width:100%;
+    background: linear-gradient(180deg,var(--glass),var(--glass-2));
+    border-radius:999px;
+    padding:10px 14px;
+    border:1px solid rgba(255,255,255,0.04);
+    display:flex;
+    align-items:center;
+    gap:12px;
+    box-shadow: 0 6px 30px rgba(8,12,20,0.45), inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  .search-box .icon{
+    width:34px;height:34px;border-radius:8px;background:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:700;color:#222;font-size:16px;
+  }
+  .search-box input.address{
+    width:100%;
+    background:transparent;border:0;color:var(--text);
+    outline:none;font-size:16px;padding:8px;
+  }
+  .search-box button.go{
+    background: transparent;border:0;color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;
+  }
+  .search-box button.go:hover{color:var(--text)}
+
+  /* shortcuts row */
+  .shortcuts{
+    margin-top:8px;
+    display:flex;
+    gap:20px;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    padding:6px 10px 12px 10px;
+  }
+  .tile{
+    width:84px;height:84px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;
+    transition:transform .14s ease, box-shadow .14s ease;
+  }
+  .tile:hover{transform:translateY(-6px);box-shadow:0 12px 40px rgba(2,6,23,0.6)}
+  .tile .badge{
+    width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#111827;color:#fff;font-weight:700;
+    box-shadow:inset 0 -6px 14px rgba(0,0,0,0.4);
+  }
+  .tile .lbl{font-size:13px;color:var(--muted);margin-top:4px;text-align:center}
+
+  /* viewer area */
+  .viewer-wrap{
+    width:min(1100px,96%);
+    margin-top:18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.03);
+    box-shadow:0 8px 40px rgba(2,6,23,0.6);
+    overflow:hidden;
+  }
+  .viewer-controls{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    padding:10px 14px;
+    border-bottom:1px solid rgba(255,255,255,0.02);
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+  }
+  .viewer-controls .btn{background:transparent;border:0;color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer}
+  .viewer-controls .btn:hover{color:var(--text)}
+  .viewer-controls .address-mini{flex:1;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,0.25);color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .viewer-iframe{height:420px;width:100%;border:0;display:block;background:#fff}
+
+  /* notice */
+  .notice{display:none;padding:10px;border-radius:8px;background:#fff7ed;border:1px solid #f5d0a6;color:#7a2a19;margin:10px;align-items:center;gap:8px}
+  .notice .actions{margin-left:12px;display:inline-flex;gap:8px}
+  .notice button{padding:6px 8px;border-radius:6px;border:1px solid rgba(0,0,0,0.08);background:#fff;cursor:pointer}
+
+  /* read-only content view (sanitized) */
+  .contentView{display:none;padding:16px;max-height:480px;overflow:auto;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
+  .read-header{display:flex;gap:8px;align-items:center;margin-bottom:10px;color:var(--muted)}
+
+  /* footer area (log) */
+  .footer-log{position:fixed;left:0;right:0;bottom:0;padding:10px 24px;color:var(--muted);font-size:13px;background:linear-gradient(180deg,transparent, rgba(0,0,0,0.3));text-align:center}
+
+  @media (max-width:700px){
+    .hero .big-logo{font-size:32px}
+    .tile{width:72px;height:72px}
+    .viewer-iframe{height:320px}
+  }
+</style>
+</head>
+<body>
+  <header class="topbar" role="banner">
+    <div class="brand" aria-hidden="true">
+      <div class="logo">⚡</div>
+      <div class="title">dogeub <span style="font-weight:600;font-size:12px;color:var(--muted);margin-left:8px">v5.0.0</span></div>
+    </div>
+
+    <nav class="top-actions" aria-label="Top actions">
+      <a href="#" title="Apps">◻ Apps</a>
+      <a href="#" title="Games">🎮 Games</a>
+      <a href="#" title="Settings">⚙ Settings</a>
+    </nav>
+  </header>
+
+  <main class="stage" role="main">
+    <section class="hero" aria-label="Search hero">
+      <div class="big-logo"><span class="ll">⚡</span> dogeub</div>
+
+      <div class="search-wrap" role="search">
+        <div class="search-box" aria-label="Search or enter URL">
+          <div class="icon">G</div>
+          <input id="addressInput" class="address" placeholder="Search Google or type URL" aria-label="Search or enter address">
+          <button id="goBtn" class="go" title="Search">🔍</button>
+        </div>
+      </div>
+
+      <div class="shortcuts" id="shortcutsRow" aria-label="Shortcuts"></div>
+
+      <!-- Viewer panel (visible) -->
+      <div class="viewer-wrap" role="region" aria-label="Preview viewer">
+        <div class="viewer-controls">
+          <button id="vBack" class="btn" title="Back">◀</button>
+          <button id="vForward" class="btn" title="Forward">▶</button>
+          <button id="vReload" class="btn" title="Reload">⟳</button>
+          <div id="viewerAddress" class="address-mini">about:blank</div>
+          <div style="margin-left:12px;display:flex;gap:8px">
+            <button id="btnRead" class="btn" title="View read-only">📄 View (read)</button>
+            <button id="btnOpenTab" class="btn" title="Open original">⤴ Open</button>
+            <button id="btnOpenProxy" class="btn" title="Open via proxy">🛡 Open via proxy</button>
+          </div>
+        </div>
+
+        <div id="notice" class="notice" role="alert"></div>
+
+        <iframe id="viewer" class="viewer-iframe" sandbox="allow-scripts allow-forms allow-popups allow-same-origin allow-presentation"></iframe>
+
+        <div id="contentView" class="contentView" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer-log" id="log">Suggestions try DuckDuckGo first; GN shortcut supported (type "gn math").</div>
+
+<script>
+/*
+  Dark homepage + visible iframe preview viewer + read-mode + optional proxy.
+  - PROXY_BASE: set to your proxy URL (e.g. 'http://localhost:3000') to enable "Open via proxy"
+  - Clicking tiles opens in same tab (Ctrl/Cmd click opens new tab)
+  - Search bar still supports GN shortcuts (gn math)
+*/
+
+(function(){
+  const PROXY_BASE = ''; // << SET your proxy here if you want proxy fetches (e.g. 'http://localhost:3000')
+  const SHORTCUTS_KEY = 'mini_browser_shortcuts_v1';
+  const shortcutsRow = document.getElementById('shortcutsRow');
+  const addressInput = document.getElementById('addressInput');
+  const goBtn = document.getElementById('goBtn');
+  const logEl = document.getElementById('log');
+
+  const viewer = document.getElementById('viewer');
+  const vBack = document.getElementById('vBack');
+  const vForward = document.getElementById('vForward');
+  const vReload = document.getElementById('vReload');
+  const viewerAddress = document.getElementById('viewerAddress');
+  const notice = document.getElementById('notice');
+  const contentView = document.getElementById('contentView');
+  const btnRead = document.getElementById('btnRead');
+  const btnOpenTab = document.getElementById('btnOpenTab');
+  const btnOpenProxy = document.getElementById('btnOpenProxy');
+
+  // minimal history for viewer
+  let viewHistory = [];
+  let viewIndex = -1;
+
+  const DEFAULT_SHORTCUTS = [
+    { title: 'Google', url: 'https://www.google.com', color: '#4285F4' },
+    { title: 'Facebook', url: 'https://www.facebook.com', color: '#1877F2' },
+    { title: 'Quora', url: 'https://www.quora.com', color: '#B92B27' },
+    { title: 'GitHub', url: 'https://github.com', color: '#2f363d' },
+    { title: 'GN math', url: 'https://lebro29.github.io/gn/?q=math', color: '#06b6d4' }
+  ];
+
+  function loadShortcuts(){ try {
+    const raw = localStorage.getItem(SHORTCUTS_KEY);
+    if(!raw) return DEFAULT_SHORTCUTS.slice();
+    const parsed = JSON.parse(raw);
+    if(Array.isArray(parsed)) return parsed;
+  } catch(e){} return DEFAULT_SHORTCUTS.slice(); }
+  function saveShortcuts(list){ try { localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(list)); } catch(e){} }
+
+  function renderShortcuts(){
+    const list = loadShortcuts();
+    shortcutsRow.innerHTML = '';
+    for(const s of list){
+      const t = document.createElement('button');
+      t.className = 'tile';
+      t.title = s.url;
+      t.style.background = `linear-gradient(180deg, ${hexAlpha(s.color||'#111',0.09)}, ${hexAlpha(s.color||'#111',0.03)})`;
+      t.addEventListener('click', (ev)=>{
+        const openNew = ev.ctrlKey || ev.metaKey;
+        if(openNew) { window.open(s.url, '_blank'); return; }
+        navigateViewerTo(s.url);
+      });
+
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      badge.style.background = s.color || '#111';
+      badge.textContent = (s.title && s.title[0]) ? s.title[0].toUpperCase() : '•';
+      t.appendChild(badge);
+
+      const lbl = document.createElement('div');
+      lbl.className = 'lbl';
+      lbl.textContent = s.title;
+      t.appendChild(lbl);
+
+      shortcutsRow.appendChild(t);
+    }
+
+    // add "Add" tile
+    const add = document.createElement('button');
+    add.className = 'tile add-short';
+    add.addEventListener('click', promptAddShortcut);
+    const plus = document.createElement('div'); plus.className='badge'; plus.style.background='#111'; plus.textContent='+';
+    add.appendChild(plus);
+    const plbl = document.createElement('div'); plbl.className='lbl'; plbl.textContent='New';
+    add.appendChild(plbl);
+    shortcutsRow.appendChild(add);
+  }
+
+  function promptAddShortcut(){
+    const title = prompt('Shortcut title (e.g. "Example"):');
+    if(!title) return;
+    let url = prompt('URL for the shortcut (include https://):','https://');
+    if(!url) return;
+    try { new URL(url); } catch(e){ alert('Invalid URL'); return; }
+    const color = prompt('Background color (hex or css color), optional:','#0ea5e9') || '#0ea5e9';
+    const list = loadShortcuts(); list.push({ title: title.trim(), url: url.trim(), color }); saveShortcuts(list); renderShortcuts();
+  }
+
+  function hexAlpha(hex, a){
+    try {
+      if(hex.startsWith('#')) hex = hex.slice(1);
+      if(hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+      const r = parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
+      return `rgba(${r},${g},${b},${a})`;
+    } catch(e){ return `rgba(16,22,32,${a})`; }
+  }
+
+  // viewer navigation
+  function navigateViewerTo(url){
+    // push into history
+    if(viewIndex >= 0 && viewHistory[viewIndex] === url) {
+      // same
+    } else {
+      viewHistory = viewHistory.slice(0, viewIndex + 1);
+      viewHistory.push(url);
+      viewIndex = viewHistory.length - 1;
+    }
+    setViewerSrc(url);
+  }
+  function setViewerSrc(url){
+    hideNotice();
+    showIframe();
+    viewerAddress.textContent = url;
+    try { viewer.removeAttribute('srcdoc'); viewer.src = url; }
+    catch(e){ showNotice('Could not set iframe src: ' + (e && e.message)); }
+    // fallback detection timer
+    const fid = setTimeout(()=> {
+      let blocked = false;
+      try {
+        const loc = viewer.contentWindow && viewer.contentWindow.location && viewer.contentWindow.location.href;
+        if(!loc || loc === 'about:blank') blocked = true;
+      } catch(e){
+        blocked = true;
+      }
+      if(blocked) {
+        showNotice('This site may refuse framing. Use "View (read-only)" or "Open" (new tab).');
+      }
+    }, 1200);
+    viewer.dataset._frameFallback = fid;
+  }
+
+  vBack.addEventListener('click', ()=> {
+    if(viewIndex > 0){ viewIndex--; setViewerSrc(viewHistory[viewIndex]); }
+  });
+  vForward.addEventListener('click', ()=> {
+    if(viewIndex < viewHistory.length - 1){ viewIndex++; setViewerSrc(viewHistory[viewIndex]); }
+  });
+  vReload.addEventListener('click', ()=> {
+    if(viewIndex >= 0) setViewerSrc(viewHistory[viewIndex]);
+  });
+
+  // notice helpers
+  function showNotice(msg, openUrl=null){
+    notice.style.display='flex';
+    notice.innerHTML = '';
+    const span = document.createElement('span'); span.textContent = msg;
+    notice.appendChild(span);
+    const actions = document.createElement('span'); actions.className='actions';
+    if(openUrl){
+      const o = document.createElement('button'); o.textContent='Open in new tab';
+      o.addEventListener('click', ()=> window.open(openUrl, '_blank'));
+      actions.appendChild(o);
+    }
+    const r = document.createElement('button'); r.textContent='View page (read-only)';
+    r.addEventListener('click', ()=> { if(openUrl) fetchAndDisplayContent(openUrl, false); else {
+      const t = viewHistory[viewIndex]; if(t) fetchAndDisplayContent(t, false);
+    }});
+    actions.appendChild(r);
+    notice.appendChild(actions);
+  }
+  function hideNotice(){ notice.style.display='none'; notice.innerHTML=''; }
+
+  function showIframe(){ viewer.style.display='block'; contentView.style.display='none'; }
+  function showReadView(){ viewer.style.display='none'; contentView.style.display='block'; }
+
+  // read-mode: fetch and sanitize
+  async function fetchAndDisplayContent(url, useProxy=false){
+    hideNotice();
+    showReadView();
+    contentView.innerHTML = '<div class="read-header">Loading content…</div>';
+    try {
+      const target = (useProxy && PROXY_BASE) ? buildProxyUrl(url) : url;
+      const res = await fetch(target, { method:'GET', mode:'cors', credentials:'omit' });
+      if(!res.ok){ contentView.innerHTML = `<div class="read-header">Could not fetch content (status ${res.status}).</div>`; return; }
+      const text = await res.text();
+      const cleaned = sanitizeHtml(text, url);
+      const header = document.createElement('div');
+      header.className = 'read-header';
+      const openBtn = document.createElement('button'); openBtn.textContent = 'Open original'; openBtn.className='btn';
+      openBtn.addEventListener('click', ()=> window.open(url, '_blank'));
+      header.appendChild(openBtn);
+      const viaProxyBtn = document.createElement('button'); viaProxyBtn.textContent = PROXY_BASE ? 'Open via proxy' : 'Proxy (not configured)'; viaProxyBtn.className='btn';
+      viaProxyBtn.addEventListener('click', ()=> {
+        if(!PROXY_BASE){ alert('Proxy not configured. Set PROXY_BASE at top of file.'); return; }
+        fetchAndDisplayContent(url, true);
+      });
+      header.appendChild(viaProxyBtn);
+      const backBtn = document.createElement('button'); backBtn.textContent='Back to frame'; backBtn.className='btn';
+      backBtn.addEventListener('click', ()=> { showIframe(); if(viewIndex>=0) setViewerSrc(viewHistory[viewIndex]); });
+      header.appendChild(backBtn);
+      contentView.innerHTML = '';
+      contentView.appendChild(header);
+      const hr = document.createElement('hr'); contentView.appendChild(hr);
+      const frag = document.createElement('div');
+      frag.innerHTML = cleaned;
+      contentView.appendChild(frag);
+      contentView.scrollTop = 0;
+    } catch(err){
+      contentView.innerHTML = `<div class="read-header">Could not fetch content: ${escapeHtml(err && err.message)}.</div>`;
+    }
+  }
+
+  function buildProxyUrl(targetUrl){ if(!PROXY_BASE) return null; return PROXY_BASE.replace(/\/$/, '') + '/proxy?url=' + encodeURIComponent(targetUrl); }
+
+  // sanitize HTML (remove scripts, event handlers, meta CSP/X-Frame etc.)
+  function sanitizeHtml(htmlText, baseUrl){
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+
+      doc.querySelectorAll('meta[http-equiv]').forEach(m => {
+        const v = (m.getAttribute('http-equiv')||'').toLowerCase();
+        if(v.includes('content-security-policy') || v.includes('x-frame-options')) m.remove();
+      });
+      doc.querySelectorAll('script').forEach(s => s.remove());
+      doc.querySelectorAll('iframe,object,embed,link[rel="import"]').forEach(n => n.remove());
+      doc.querySelectorAll('meta[http-equiv="refresh"]').forEach(n => n.remove());
+
+      const all = doc.querySelectorAll('*');
+      all.forEach(el => {
+        Array.from(el.attributes || []).forEach(attr => {
+          const name = attr.name.toLowerCase();
+          if(name.startsWith('on')) el.removeAttribute(attr.name);
+          if((name === 'href' || name === 'src') && attr.value && attr.value.trim().toLowerCase().startsWith('javascript:')) el.removeAttribute(attr.name);
+        });
+      });
+
+      const attrs = ['href','src','srcset','action','data-src'];
+      all.forEach(el => {
+        attrs.forEach(a => {
+          if(el.hasAttribute && el.hasAttribute(a)){
+            try {
+              const v = el.getAttribute(a);
+              if(!v) return;
+              if(/^(data:|mailto:|tel:|javascript:)/i.test(v)) return;
+              const abs = new URL(v, baseUrl).toString();
+              el.setAttribute(a, abs);
+            } catch(e){}
+          }
+        });
+      });
+
+      const serializer = new XMLSerializer();
+      let bodyHtml = '';
+      const bodyChildren = doc.body ? Array.from(doc.body.childNodes) : [];
+      bodyChildren.forEach(node => bodyHtml += serializer.serializeToString(node));
+      const note = `<div style="font-size:13px;color:var(--muted);margin-bottom:8px">Sanitized read-only content from ${escapeHtml(baseUrl)} — scripts and active content removed.</div>`;
+      return note + bodyHtml;
+    } catch(e){
+      return `<div class="read-header">Failed to sanitize content: ${escapeHtml(e && e.message)}</div>`;
+    }
+  }
+
+  // small helpers
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // Basic GN + URL heuristics and search handler
+  function isProbablyUrl(input){
+    input = (input||'').trim();
+    if(!input) return false;
+    if(/^https?:\/\//i.test(input)) return true;
+    if(/\s/.test(input)) return false;
+    if(/\.\w{2,}/.test(input)) return true;
+    return false;
+  }
+  function parseInputToUrl(input){
+    input = (input||'').trim();
+    if(!input) return 'about:blank';
+    const m = input.match(/^(?:gn:|gn\s+)(.+)$/i);
+    if(m){ const q = m[1].trim(); if(q) return 'https://lebro29.github.io/gn/?q=' + encodeURIComponent(q); return 'https://lebro29.github.io/gn/'; }
+    if(/^gn$/i.test(input)) return 'https://lebro29.github.io/gn/';
+    if(isProbablyUrl(input)){ if(!/^https?:\/\//i.test(input)) input = 'https://' + input; return input; }
+    return 'https://www.google.com/search?q=' + encodeURIComponent(input);
+  }
+
+  function handleGo(){
+    const raw = addressInput.value.trim();
+    if(!raw){ log('Type something'); return; }
+    const url = parseInputToUrl(raw);
+    // open in viewer (preview) instead of new tab
+    navigateViewerTo(url);
+  }
+  goBtn.addEventListener('click', handleGo);
+  addressInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); handleGo(); } });
+
+  // open in new tab
+  btnOpenTab.addEventListener('click', ()=> {
+    if(viewIndex >= 0) window.open(viewHistory[viewIndex], '_blank');
+  });
+
+  // open via proxy button
+  btnOpenProxy.addEventListener('click', ()=> {
+    if(!PROXY_BASE){ alert('Proxy not configured. Set PROXY_BASE variable at top of file.'); return; }
+    if(viewIndex >= 0){
+      const p = buildProxyUrl(viewHistory[viewIndex]);
+      window.open(p, '_blank');
+    }
+  });
+
+  // read button uses current viewer URL
+  btnRead.addEventListener('click', ()=> {
+    if(viewIndex >= 0) fetchAndDisplayContent(viewHistory[viewIndex], false);
+  });
+
+  // iframe load handler to clear fallback timer
+  viewer.addEventListener('load', ()=> {
+    try {
+      const fid = viewer.dataset._frameFallback;
+      if(fid){ clearTimeout(Number(fid)); delete viewer.dataset._frameFallback; }
+      // hide notice if loaded successfully
+      try {
+        const loc = viewer.contentWindow.location.href;
+        if(loc && loc !== 'about:blank') hideNotice();
+      } catch(e){}
+    } catch(e){}
+  });
+
+  // init
+  renderShortcuts();
+  log('Ready. Viewer restored — click a shortcut or type in the search bar. "View (read)" shows a sanitized copy if framing is blocked.');
+  window._MiniBrowser = { renderShortcuts, buildProxyUrl, fetchAndDisplayContent, navigateViewerTo };
+
+})();
+</script>
+</body>
+</html>
